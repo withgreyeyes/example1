@@ -1,33 +1,108 @@
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using RDotNet;
+using System.IO;
 
-# Precompiled Headers
-*.gch
-*.pch
+namespace WindowsFormsApplication1
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+        public void SetupPath(string Rversion = "R-3.3.3")
+        {
+            var oldPath = System.Environment.GetEnvironmentVariable("PATH");
+            var rPath = System.Environment.Is64BitProcess ?
+                                   string.Format(@"C:\Program Files\R\{0}\bin\x64", Rversion) :
+                                   string.Format(@"C:\Program Files\R\{0}\bin\i386", Rversion);
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+            if (!Directory.Exists(rPath))
+                throw new DirectoryNotFoundException(
+                  string.Format(" R.dll not found in : {0}", rPath));
+            var newPath = string.Format("{0}{1}{2}", rPath,
+                                         System.IO.Path.PathSeparator, oldPath);
+            System.Environment.SetEnvironmentVariable("PATH", newPath);
+        }
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SetupPath();
+            REngine engine = REngine.CreateInstance("RDotNet");
 
-# Debug files
-*.dSYM/
-*.su
+            engine.Initialize();
+
+            //var myAddFunc = engine.Evaluate(@"addFunc  <- function() {
+            //                                            20
+            //                                          }").AsFunction();
+
+            //var sum = engine.Evaluate(@"addFunc()").AsNumeric();
+
+            //engine.Evaluate("print(sum)");
+            //Console.Write(sum[0].ToString());
+
+            //var myAddFunc = engine.Evaluate(@"addFunc  <- function(a,b) {
+            //                                            a+b
+            //                                          }").AsFunction();
+
+            //var sum = engine.Evaluate(@"addFunc(12,30)").AsNumeric();
+
+            //engine.Evaluate("print(sum)");
+            //Console.Write(sum[0].ToString());
+            //Console.ReadKey();
+
+            //            string str = string.Format(@"forecastGarch <- function(x, n.ahead=30){
+            // rates <- read.csv(file={0}, header=TRUE, sep={1})
+            // rates[1:2, ]
+            //  str(rates$Date)
+            //  rates$Date <- as.Date(rates$Date, {2})
+            //  str(rates$Date)
+            //  range(rates$Date)
+            //  rates < -rates[order(rates$Date), ]
+            //  plot(rates$Date, rates$Value, type = {3})
+            //  head(rates$Date, 20)
+            //  years < -format(rates$Date, {4})
+            //  tab < -table(years)
+            //  tab
+            //  mean(tab[1:(length(tab) - 1)])
+            //  library(forecast)
+            //myTs <- ts(x$Value, start=1, frequency=256)
+            //  fit.garch <- arima(myTs, order=c(1,1,1))
+            //  fore <- forecast(fit.garch, h=n.ahead)
+            //  plot(fore)
+            //  upper <- fore$upper[,'95%']
+            //  lower <- fore$lower[,'95%']
+            //  trend <- as.numeric(fore$fitted)
+            //  pred <- as.numeric(fore$mean)
+            //  output <- data.frame(actual = c(x$Value, rep(NA, n.ahead)),
+            //                       trend = c(trend, rep(NA, n.ahead)),
+            //                       #pred = c(trend, pred),
+            //                       pred = c(rep(NA, nrow(x)), pred),
+            //                       lower = c(rep(NA, nrow(x)), lower),                       
+            //                       upper = c(rep(NA, nrow(x)), upper),                       
+            //                       date = c(x$Date, max(x$Date) + (1:n.ahead))  
+            //  )
+            //  return(output)
+            //}", "C: Users / GTA / Documents / EIA - PET_RBRTE_D(2).csv", ", ", " % Y -% m -% d", "l", "%Y");
+
+            string str = File.ReadAllText("file.txt");
+
+            var func = engine.Evaluate(str).AsFunction();
+
+            var res = engine.Evaluate(@"forecastArima(n.ahead = 90)").AsDataFrame();
+
+            //func.Invoke
+
+            engine.Close();
+        }
+    }
+}
